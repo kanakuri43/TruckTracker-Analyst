@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TruckTrackerAnalyst.Application/TruckTrackerAnalyst.Application.csproj" />
+    <Project Path="src/TruckTrackerAnalyst.Domain/TruckTrackerAnalyst.Domain.csproj" />
+    <Project Path="src/TruckTrackerAnalyst.Infrastructure/TruckTrackerAnalyst.Infrastructure.csproj" />
+    <Project Path="src/TruckTrackerAnalyst.Presentation/TruckTrackerAnalyst.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TruckTrackerAnalyst.Tests/TruckTrackerAnalyst.Tests.csproj" />
+  </Folder>
+</Solution>
