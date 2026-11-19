@@ -16,12 +16,12 @@ public static class WarningText
     };
 }
 
-/// <summary>得意先別損益の CSV 整形。金額は円・整数（四捨五入）、粗利算出不可は空欄。</summary>
+/// <summary>得意先別営業利益の CSV 整形。金額は円・整数（四捨五入）、粗利算出不可は空欄。</summary>
 public static class ProfitCsv
 {
     public static string Build(ProfitReport r)
     {
-        var sb = new StringBuilder("得意先名,得意先コード,回数,期間経費,粗利,損益,備考\r\n");
+        var sb = new StringBuilder("得意先名,得意先コード,回数,期間経費,粗利,営業利益,備考\r\n");
         foreach (var x in r.Rows)
             sb.AppendLine(Line(x.Name, x.Code, x.Count, x.Expense, x.Profit, x.Net, WarningText.Of(x)));
         sb.AppendLine(Line("合計", null, r.Count, r.Expense, r.Profit, r.Net, ""));

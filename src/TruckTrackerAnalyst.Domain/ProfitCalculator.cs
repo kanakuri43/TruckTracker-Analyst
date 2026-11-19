@@ -1,7 +1,7 @@
 ﻿namespace TruckTrackerAnalyst.Domain;
 
 /// <summary>
-/// 得意先別 損益 = 粗利(販売管理) − 配送経費(配送管理)。TruckTracker admin.js の aggregateDestData と同じ按分。
+/// 得意先別 営業利益 = 粗利(販売管理) − 配送経費(配送管理)。TruckTracker admin.js の aggregateDestData と同じ按分。
 /// 経費 = 支店の期間経費 ÷ その支店の回数合計 × 得意先の回数。
 /// </summary>
 public static class ProfitCalculator

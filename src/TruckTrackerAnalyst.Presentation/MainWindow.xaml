@@ -38,8 +38,7 @@
             <TextBlock Text="〜" VerticalAlignment="Center" Margin="8,0" />
             <DatePicker SelectedDate="{Binding To}" Width="140" />
             <CheckBox Content="正味回数（1コース内の配達先数で按分）" IsChecked="{Binding NetMode}" Margin="20,0" VerticalAlignment="Center" />
-            <Button Content="集計" Command="{Binding AnalyzeCommand}" Width="90" Style="{StaticResource MahApps.Styles.Button.Square.Accent}" />
-            <Button Content="CSV出力" Command="{Binding ExportCsvCommand}" Width="90" Margin="8,0,0,0" />
+            <Button Content="CSV出力" Command="{Binding ExportCsvCommand}" Width="90" />
         </StackPanel>
 
         <TextBlock Grid.Row="1" Text="{Binding Error}" Foreground="Crimson" Margin="0,8,0,0" TextWrapping="Wrap">
@@ -66,7 +65,7 @@
                 <DataGridTextColumn Header="回数" Binding="{Binding Count, StringFormat={}{0:0.##}}" ElementStyle="{StaticResource Right}" Width="70" />
                 <DataGridTextColumn Header="期間経費" Binding="{Binding Expense, StringFormat=N0}" ElementStyle="{StaticResource Right}" Width="110" />
                 <DataGridTextColumn Header="粗利" Binding="{Binding Profit, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
-                <DataGridTextColumn Header="損益" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
+                <DataGridTextColumn Header="営業利益" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
                 <DataGridTextColumn Header="備考" Binding="{Binding Note}" Width="*" ElementStyle="{StaticResource NoteText}" />
             </DataGrid.Columns>
         </DataGrid>
@@ -76,7 +75,7 @@
             <TextBlock Text="{Binding Report.Count, StringFormat=回数 {0:0.##}, FallbackValue=回数 —}" Margin="0,0,20,0" />
             <TextBlock Text="{Binding Report.Expense, StringFormat=経費 {0:N0}, FallbackValue=経費 —}" Margin="0,0,20,0" />
             <TextBlock Text="{Binding Report.Profit, StringFormat=粗利 {0:N0}, FallbackValue=粗利 —}" Margin="0,0,20,0" />
-            <TextBlock Text="{Binding Report.Net, StringFormat=損益 {0:N0}, FallbackValue=損益 —}" />
+            <TextBlock Text="{Binding Report.Net, StringFormat=営業利益 {0:N0}, FallbackValue=営業利益 —}" />
         </StackPanel>
 
         <!-- 集計中: ウィンドウ中央に表示（最前面・クリックは透過） -->

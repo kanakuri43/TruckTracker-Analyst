@@ -53,7 +53,7 @@ public class ProfitCalculatorJuneTests
         Assert.Equal(196, r.Count);
         Assert.Equal(1_065_000, Math.Round(r.Expense));
         Assert.Equal(3_283_378, r.Profit);
-        // Excel の損益合計(2,245,546)はエラー行の経費を除外しているため、アプリは 粗利合計 − 経費合計 とする
+        // Excel の営業利益合計(2,245,546)はエラー行の経費を除外しているため、アプリは 粗利合計 − 経費合計 とする
         Assert.Equal(2_218_378, Math.Round(r.Net));
     }
 

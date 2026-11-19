@@ -2,7 +2,7 @@
 
 namespace TruckTrackerAnalyst.Application;
 
-/// <summary>期間内の得意先別損益を算出する。販売管理・配送管理を並行して読み取り、Domain の計算に渡す。</summary>
+/// <summary>期間内の得意先別営業利益を算出する。販売管理・配送管理を並行して読み取り、Domain の計算に渡す。</summary>
 public sealed class AnalyzeProfitUseCase(ISalesProfitRepository sales, IDeliveryRepository deliveries)
 {
     public async Task<ProfitReport> ExecuteAsync(

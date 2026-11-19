@@ -36,7 +36,7 @@ public partial class LiveReadOnlyTests(ITestOutputHelper o)
             o.WriteLine($"  支店 {id}: 月間経費 {exp:N0}, 回数 {data.Deliveries.Where(d => d.BranchId == id).Sum(d => d.Stops.Count)}");
 
         var r = ProfitCalculator.Calculate(data.Deliveries, data.BranchMonthlyExpense, PeriodMonths.Between(from, to), profit);
-        o.WriteLine($"結果: 回数 {r.Count}, 経費 {r.Expense:N0}, 粗利 {r.Profit:N0}, 損益 {r.Net:N0}  (Excel: 196 / 1,065,000 / 3,283,378)");
+        o.WriteLine($"結果: 回数 {r.Count}, 経費 {r.Expense:N0}, 粗利 {r.Profit:N0}, 営業利益 {r.Net:N0}  (Excel: 196 / 1,065,000 / 3,283,378)");
         foreach (var x in r.Rows) o.WriteLine($"  {x.Name} [{x.Code}] {x.Count} 回 経費 {x.Expense:N0} 粗利 {x.Profit:N0} {x.Warning}");
     }
 }

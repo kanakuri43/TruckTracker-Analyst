@@ -29,7 +29,7 @@ public partial class LiveReadOnlyTests
             c.GetProperty("Supabase").GetProperty("Url").GetString()!, c.GetProperty("Supabase").GetProperty("AnonKey").GetString()!)).GetAsync(from, to);
         var r = ProfitCalculator.Calculate(data.Deliveries, data.BranchMonthlyExpense, PeriodMonths.Between(from, to), profit);
         var branchStops = data.Deliveries.Where(d => d.BranchId != null).Sum(d => d.Stops.Count);
-        o.WriteLine($"App: 回数 {r.Count}(支店あり {branchStops}), 経費 {r.Expense:N0}, 粗利 {r.Profit:N0}, 損益 {r.Net:N0}   Excel: 522 / 3,195,000 / 10,608,822 / 7,438,305");
+        o.WriteLine($"App: 回数 {r.Count}(支店あり {branchStops}), 経費 {r.Expense:N0}, 粗利 {r.Profit:N0}, 営業利益 {r.Net:N0}   Excel: 522 / 3,195,000 / 10,608,822 / 7,438,305");
         o.WriteLine($"支店経費: {string.Join(", ", data.BranchMonthlyExpense.Select(kv => kv.Value.ToString("N0")))}");
 
         foreach (var x in r.Rows)

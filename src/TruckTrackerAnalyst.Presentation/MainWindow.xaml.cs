@@ -14,5 +14,6 @@ public partial class MainWindow : MetroWindow
             var d = new SaveFileDialog { Filter = "CSV (*.csv)|*.csv", FileName = $"収益_{vm.From:yyyyMMdd}-{vm.To:yyyyMMdd}.csv" };
             return d.ShowDialog(this) == true ? d.FileName : null;
         };
+        Loaded += (_, _) => _ = vm.ReloadAsync();   // 起動時に初期条件で表示
     }
 }
