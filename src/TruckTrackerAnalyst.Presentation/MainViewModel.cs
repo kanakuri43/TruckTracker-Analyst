@@ -16,8 +16,7 @@ public sealed record RowVm(CustomerProfit R)
     public decimal Count => R.Count;
     public decimal Expense => R.Expense;
     public decimal? Profit => R.Profit;
-    public decimal? Net => R.Net;
-    public string Note => WarningText.Of(R);
+    public decimal? Net => R.Net;    public string Note => WarningText.Of(R);
     public bool IsLoss => R.Net < 0;
 }
 
@@ -29,7 +28,7 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
     [ObservableProperty] private DateTime? _to = new DateTime(PrevMonth.Year, PrevMonth.Month, DateTime.DaysInMonth(PrevMonth.Year, PrevMonth.Month));
     [ObservableProperty] private bool _netMode;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(DistanceLabel))]
-    private double _distancePercent = 50;   // 期間経費のうち距離で按分する割合(%)。0 = 回数のみ（従来の計算）
+    private double _distancePercent = 75;   // 期間経費のうち距離で按分する割合(%)。0 = 回数のみ（従来の計算）
 
     public string DistanceLabel => DistancePercent == 0 ? "0%（回数のみ）" : $"{DistancePercent:0}%";
     [ObservableProperty] private string? _error;

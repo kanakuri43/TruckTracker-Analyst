@@ -7,7 +7,7 @@ using System.Windows.Shapes;
 namespace TruckTrackerAnalyst.Presentation;
 
 /// <summary>
-/// 回数 × 距離の散布図（試作）。点の色 = 営業利益の黒字/赤字、白抜きの輪 = 回数按分と距離按分で黒字・赤字が逆転する得意先。
+/// 回数 × 距離の散布図。点の大きさ = 粗利、点の色 = 営業利益の黒字/赤字、白抜きの輪 = 回数按分と距離按分で黒字・赤字が逆転する得意先。
 /// メイン画面のタブに置く。Rows（一覧）が再集計されたら描き直す。
 /// </summary>
 public sealed class ScatterChart : DockPanel
@@ -32,6 +32,7 @@ public sealed class ScatterChart : DockPanel
         legend.Children.Add(Key(Dot(Loss, false), "赤字"));
         legend.Children.Add(Key(Dot(NoData, false), "粗利なし（コード未設定）"));
         legend.Children.Add(Key(Dot(Ink, true), "回数按分と距離按分で黒字・赤字が逆転"));
+        legend.Children.Add(new TextBlock { Text = "点の大きさ = 粗利（右上で小さい点 = 手間の割に粗利が取れていない）", Foreground = Ink, VerticalAlignment = VerticalAlignment.Center });
         Margin = new Thickness(0, 8, 0, 0);
         SetDock(legend, Dock.Top);
         SetDock(_footer, Dock.Bottom);
@@ -80,18 +81,23 @@ public sealed class ScatterChart : DockPanel
         Text("回数", X(xMax) - 30, h - 18);
         Text("平均距離 (km)", left + 4, 0);
 
-        // 逆転を最後に描いて前面に出す
-        foreach (var r in pts.OrderBy(r => r.R.SignFlips))
+        // 点の面積 ∝ 粗利（右上 = 手間が大きいのに点が小さい = 粗利が取れていない先）。粗利0以下・なしは最小
+        var pMax = (double)pts.Select(r => r.Profit ?? 0).DefaultIfEmpty(0).Max();
+        double Size(RowVm r) => pMax <= 0 || r.Profit is not > 0 ? MinDot : MinDot + (MaxDot - MinDot) * Math.Sqrt((double)r.Profit.Value / pMax);
+
+        // 大きい点を先に描いて小さい点を隠さない。逆転は最後に描いて前面に出す
+        foreach (var r in pts.OrderBy(r => r.R.SignFlips).ThenByDescending(Size))
         {
             var brush = r.Net is null ? NoData : r.Net < 0 ? Loss : Profit;
-            var dot = Dot(brush, r.R.SignFlips);
-            dot.ToolTip = $"{r.Name}\n回数 {r.Count:0.##}　距離 {r.Km:0.0} km\n経費 {r.Expense:N0}　粗利 {r.Profit:N0}\n営業利益 {r.Net:N0}"
-                          + (r.Note == "" ? "" : "\n" + r.Note);
+            var d = Size(r);
+            var dot = Dot(brush, r.R.SignFlips, d);
+            dot.ToolTip = $"{r.Name}\n回数 {r.Count:0.##}　距離 {r.Km:0.0} km\n経費 {r.Expense:N0}　粗利 {r.Profit:N0}\n営業利益 {r.Net:N0}"                          + (r.Note == "" ? "" : "\n" + r.Note);
             ToolTipService.SetInitialShowDelay(dot, 0);
-            Canvas.SetLeft(dot, X((double)r.Count) - dot.Width / 2);
-            Canvas.SetTop(dot, Y((double)r.Km!.Value) - dot.Height / 2);
+            double x = X((double)r.Count), y = Y((double)r.Km!.Value);
+            Canvas.SetLeft(dot, x - dot.Width / 2);
+            Canvas.SetTop(dot, y - dot.Height / 2);
             Add(dot);
-            if (r.R.SignFlips) Text(r.Name.Replace("株式会社", ""), X((double)r.Count) + 9, Y((double)r.Km.Value) - 9);   // 逆転だけ直接ラベル
+            if (r.R.SignFlips) Text(r.Name.Replace("株式会社", ""), x + dot.Width / 2 + 2, y - 9);   // 逆転だけ直接ラベル
         }
     }
 
@@ -104,10 +110,14 @@ public sealed class ScatterChart : DockPanel
         Add(t);
     }
 
-    /// <summary>通常 = 塗り 10px（白の輪で重なりを分離）、逆転 = 白抜きの太い輪 14px。</summary>
-    static Ellipse Dot(Brush b, bool flips) => flips
-        ? new Ellipse { Width = 14, Height = 14, Stroke = b, StrokeThickness = 3, Fill = Brushes.White }
-        : new Ellipse { Width = 10, Height = 10, Fill = b, Stroke = Brushes.White, StrokeThickness = 1.5 };
+    const double MinDot = 8, MaxDot = 44;
+
+    /// <summary>通常 = 半透明の塗り（白の輪で重なりを分離）、逆転 = 太い輪（中は半透明の白）。d = 直径。</summary>
+    static Ellipse Dot(Brush b, bool flips, double d = 10) => flips
+        ? new Ellipse { Width = d + 4, Height = d + 4, Stroke = b, StrokeThickness = 3, Fill = Translucent }
+        : new Ellipse { Width = d, Height = d, Fill = b, Stroke = Brushes.White, StrokeThickness = 1.5, Opacity = 0.7 };
+
+    static readonly Brush Translucent = Freeze("#b3ffffff");
 
     static StackPanel Key(Ellipse dot, string label)
     {

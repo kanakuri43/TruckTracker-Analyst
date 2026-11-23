@@ -3,8 +3,13 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                  xmlns:local="clr-namespace:TruckTrackerAnalyst.Presentation"
-                 Title="得意先別 収益分析（粗利 − 配送経費）" Height="680" Width="1200" WindowStartupLocation="CenterScreen"
+                 Title="TruckTracker-Analyst" Height="680" Width="1200" WindowStartupLocation="CenterScreen"
                  WindowTransitionsEnabled="False">
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <Button Content="CSV出力" Command="{Binding ExportCsvCommand}" />
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <Style x:Key="Right" TargetType="TextBlock">
@@ -44,7 +49,6 @@
             <Slider Value="{Binding DistancePercent}" Minimum="0" Maximum="100" TickFrequency="25" IsSnapToTickEnabled="True"
                     TickPlacement="BottomRight" Width="140" VerticalAlignment="Center" />
             <TextBlock Text="{Binding DistanceLabel}" Width="100" VerticalAlignment="Center" Margin="6,0,20,0" />
-            <Button Content="CSV出力" Command="{Binding ExportCsvCommand}" Width="90" />
         </StackPanel>
 
         <TextBlock Grid.Row="1" Text="{Binding Error}" Foreground="Crimson" Margin="0,8,0,0" TextWrapping="Wrap">
@@ -81,8 +85,7 @@
             </TabItem>
             <TabItem Header="散布図（回数 × 距離）" mah:HeaderedControlHelper.HeaderFontSize="16">
                 <local:ScatterChart x:Name="Scatter" />
-            </TabItem>
-        </TabControl>
+            </TabItem>        </TabControl>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" TextElement.FontSize="15" TextElement.FontWeight="Bold">
             <TextBlock Text="合計" Margin="0,0,20,0" />
