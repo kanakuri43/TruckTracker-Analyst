@@ -21,15 +21,15 @@ public static class ProfitCsv
 {
     public static string Build(ProfitReport r)
     {
-        var sb = new StringBuilder("得意先名,得意先コード,回数,期間経費,粗利,営業利益,備考\r\n");
+        var sb = new StringBuilder("得意先名,得意先コード,距離(km),回数,期間経費,粗利,営業利益,備考\r\n");
         foreach (var x in r.Rows)
-            sb.AppendLine(Line(x.Name, x.Code, x.Count, x.Expense, x.Profit, x.Net, WarningText.Of(x)));
-        sb.AppendLine(Line("合計", null, r.Count, r.Expense, r.Profit, r.Net, ""));
+            sb.AppendLine(Line(x.Name, x.Code, x.Km, x.Count, x.Expense, x.Profit, x.Net, WarningText.Of(x)));
+        sb.AppendLine(Line("合計", null, null, r.Count, r.Expense, r.Profit, r.Net, ""));
         return sb.ToString();
     }
 
-    private static string Line(string name, string? code, decimal count, decimal expense, decimal? profit, decimal? net, string note) =>
-        string.Join(',', Esc(name), Esc(code), count.ToString("0.##"), Yen(expense), Yen(profit), Yen(net), Esc(note));
+    private static string Line(string name, string? code, decimal? km, decimal count, decimal expense, decimal? profit, decimal? net, string note) =>
+        string.Join(',', Esc(name), Esc(code), km?.ToString("0.0") ?? "", count.ToString("0.##"), Yen(expense), Yen(profit), Yen(net), Esc(note));
 
     private static string Yen(decimal? v) => v is { } d ? Math.Round(d, MidpointRounding.AwayFromZero).ToString("0") : "";
 

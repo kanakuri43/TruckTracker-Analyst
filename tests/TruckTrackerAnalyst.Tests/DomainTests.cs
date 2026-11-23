@@ -110,3 +110,61 @@ public class ProfitCalculatorJuneTests
         Assert.Equal(Warning.NoCode, r.Rows.Single(x => x.Name == "B").Warning);   // 補完できない名前は未設定のまま
     }
 }
+
+public class RowOrderTests
+{
+    [Fact]
+    public void Rows_AreSortedByNetAscending_NoCodeLast()
+    {
+        var b = Guid.NewGuid();
+        var r = ProfitCalculator.Calculate(
+            [new Delivery(b, [new Stop("黒字", "1"), new Stop("赤字", "2"), new Stop("コードなし", null)])],
+            new Dictionary<Guid, decimal> { [b] = 300 }, 1m, new Dictionary<string, decimal> { ["1"] = 1000, ["2"] = 0 });
+        Assert.Equal(["赤字", "黒字", "コードなし"], r.Rows.Select(x => x.Name));
+    }
+}
+
+public class DistanceWeightTests
+{
+    static readonly Guid B = Guid.NewGuid();
+
+    static ProfitReport Run(decimal share, params Stop[] stops) => ProfitCalculator.Calculate(
+        stops.Select(s => new Delivery(B, [s])), new Dictionary<Guid, decimal> { [B] = 1000 }, 1m,
+        new Dictionary<string, decimal>(), distanceShare: share);
+
+    static decimal Exp(ProfitReport r, string name) => r.Rows.Single(x => x.Name == name).Expense;
+
+    [Fact]
+    public void Share50_SplitsHalfByCount_HalfByCountTimesKm()
+    {
+        // A 10km ×1回, B 30km ×1回: 回数分 500 を 1:1、距離分 500 を 10:30
+        var r = Run(0.5m, new Stop("A", "1", 10), new Stop("B", "2", 30));
+        Assert.Equal(250 + 125, Exp(r, "A"));
+        Assert.Equal(250 + 375, Exp(r, "B"));
+        Assert.Equal(1000, r.Expense);
+        Assert.Equal(10, r.Rows.Single(x => x.Name == "A").Km);
+    }
+
+    [Fact]
+    public void Share0_IsSameAsCountOnly() =>
+        Assert.Equal(500, Exp(Run(0, new Stop("A", "1", 10), new Stop("B", "2", 90)), "A"));
+
+    [Fact]
+    public void MissingKm_FilledBySameName_ThenAverage()
+    {
+        // A(null) は同名の A=10 で補完。C は座標なし → 座標ありの記録の平均 (10+40)/2 = 25
+        var r = Run(1, new Stop("A", "1", 10), new Stop("A", "1", null), new Stop("B", "2", 40), new Stop("C", null, null));
+        Assert.Equal(10, r.Rows.Single(x => x.Name == "A").Km);
+        Assert.Equal(25, r.Rows.Single(x => x.Name == "C").Km);
+        Assert.Equal(1000m * 20 / 85, Exp(r, "A"));
+        Assert.Equal(1000m * 25 / 85, Exp(r, "C"));
+    }
+
+    [Fact]
+    public void AllZeroKm_FallsBackToCount() =>
+        Assert.Equal(500, Exp(Run(1, new Stop("A", "1", 0), new Stop("B", "2", 0)), "A"));
+
+    [Fact]
+    public void Haversine_AkitaToTokyo_About450km() =>
+        Assert.InRange(Geo.Km(39.7186, 140.1024, 35.6812, 139.7671), 445m, 455m);
+}

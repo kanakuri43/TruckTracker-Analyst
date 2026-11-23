@@ -12,6 +12,7 @@ public sealed record RowVm(CustomerProfit R)
 {
     public string Name => R.Name;
     public string Code => R.Code ?? "";
+    public decimal? Km => R.Km;
     public decimal Count => R.Count;
     public decimal Expense => R.Expense;
     public decimal? Profit => R.Profit;
@@ -27,6 +28,10 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
     [ObservableProperty] private DateTime? _from = new DateTime(PrevMonth.Year, PrevMonth.Month, 1);
     [ObservableProperty] private DateTime? _to = new DateTime(PrevMonth.Year, PrevMonth.Month, DateTime.DaysInMonth(PrevMonth.Year, PrevMonth.Month));
     [ObservableProperty] private bool _netMode;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(DistanceLabel))]
+    private double _distancePercent = 50;   // 期間経費のうち距離で按分する割合(%)。0 = 回数のみ（従来の計算）
+
+    public string DistanceLabel => DistancePercent == 0 ? "0%（回数のみ）" : $"{DistancePercent:0}%";
     [ObservableProperty] private string? _error;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ExportCsvCommand))] private ProfitReport? _report;
@@ -40,6 +45,7 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
     partial void OnFromChanged(DateTime? value) => _ = ReloadAsync();
     partial void OnToChanged(DateTime? value) => _ = ReloadAsync();
     partial void OnNetModeChanged(bool value) => _ = ReloadAsync();
+    partial void OnDistancePercentChanged(double value) => _ = ReloadAsync();
 
     private int _version;   // 最新の集計要求だけ画面に反映する（連続変更時に古い結果で上書きしない）
 
@@ -54,10 +60,11 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
         try
         {
             var r = await useCase.ExecuteAsync(DateOnly.FromDateTime(f), DateOnly.FromDateTime(t),
-                NetMode ? CountMode.Net : CountMode.Count);
+                NetMode ? CountMode.Net : CountMode.Count,
+                (decimal)DistancePercent / 100);
             if (v != _version) return;
             Rows.Clear();
-            foreach (var x in r.Rows) Rows.Add(new RowVm(x));
+            foreach (var x in r.Rows) Rows.Add(new RowVm(x));   // 並びは営業利益の昇順（ProfitCalculator）
             Report = r;
         }
         catch (Exception ex) { if (v == _version) Error = "集計に失敗しました: " + ex.Message; }

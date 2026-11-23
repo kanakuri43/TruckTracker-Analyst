@@ -38,6 +38,11 @@
             <TextBlock Text="〜" VerticalAlignment="Center" Margin="8,0" />
             <DatePicker SelectedDate="{Binding To}" Width="140" />
             <CheckBox Content="正味回数（1コース内の配達先数で按分）" IsChecked="{Binding NetMode}" Margin="20,0" VerticalAlignment="Center" />
+            <TextBlock Text="距離加重" VerticalAlignment="Center" Margin="0,0,6,0"
+                       ToolTip="期間経費のうち指定した割合を「回数 × 支店からの直線距離」で按分する。残りは回数で按分。0% = 回数のみ。" />
+            <Slider Value="{Binding DistancePercent}" Minimum="0" Maximum="100" TickFrequency="25" IsSnapToTickEnabled="True"
+                    TickPlacement="BottomRight" Width="140" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding DistanceLabel}" Width="100" VerticalAlignment="Center" Margin="6,0,20,0" />
             <Button Content="CSV出力" Command="{Binding ExportCsvCommand}" Width="90" />
         </StackPanel>
 
@@ -62,10 +67,11 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="配送先名" Binding="{Binding Name}" Width="230" />
                 <DataGridTextColumn Header="得意先コード" Binding="{Binding Code}" Width="110" />
+                <DataGridTextColumn Header="距離(km)" Binding="{Binding Km, StringFormat={}{0:0.0}, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="80" />
                 <DataGridTextColumn Header="回数" Binding="{Binding Count, StringFormat={}{0:0.##}}" ElementStyle="{StaticResource Right}" Width="70" />
                 <DataGridTextColumn Header="期間経費" Binding="{Binding Expense, StringFormat=N0}" ElementStyle="{StaticResource Right}" Width="110" />
                 <DataGridTextColumn Header="粗利" Binding="{Binding Profit, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
-                <DataGridTextColumn Header="営業利益" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
+                <DataGridTextColumn Header="営業利益" SortDirection="Ascending" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
                 <DataGridTextColumn Header="備考" Binding="{Binding Note}" Width="*" ElementStyle="{StaticResource NoteText}" />
             </DataGrid.Columns>
         </DataGrid>

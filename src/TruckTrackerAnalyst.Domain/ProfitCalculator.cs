@@ -3,25 +3,36 @@
 /// <summary>
 /// 得意先別 営業利益 = 粗利(販売管理) − 配送経費(配送管理)。TruckTracker admin.js の aggregateDestData と同じ按分。
 /// 経費 = 支店の期間経費 ÷ その支店の回数合計 × 得意先の回数。
+/// 距離加重（distanceShare &gt; 0）: 期間経費のうち distanceShare を「回数×支店からの直線距離」で、残りを回数で按分する。
 /// </summary>
 public static class ProfitCalculator
 {
     /// <param name="branchMonthlyExpense">支店ID → 月間経費</param>
     /// <param name="profitByCode">得意先コード → 粗利（期間内の販売管理）</param>
+    /// <param name="distanceShare">期間経費のうち距離で按分する割合（0〜1）。0 = 回数のみ（従来の計算）。</param>
     public static ProfitReport Calculate(
         IEnumerable<Delivery> deliveries0,
         IReadOnlyDictionary<Guid, decimal> branchMonthlyExpense,
         decimal months,
         IReadOnlyDictionary<string, decimal> profitByCode,
-        CountMode mode = CountMode.Count)
+        CountMode mode = CountMode.Count,
+        decimal distanceShare = 0)
     {
+        if (distanceShare is < 0 or > 1) throw new ArgumentOutOfRangeException(nameof(distanceShare));
         var profits = profitByCode.ToDictionary(kv => NormalizeCode(kv.Key)!, kv => kv.Value);
         var deliveries = deliveries0.Where(d => d.Stops.Count > 0).ToList();
-        // コードを引けない記録（course_stop の紐付け切れ等）は、同名の配達先の他の記録から補う（TruckTracker 本体の集計と同じ）。
-        var codeByName = deliveries.SelectMany(d => d.Stops)
+        var stops = deliveries.SelectMany(d => d.Stops).ToList();
+        // コードを引けない記録（course_stop の紐付け切れ等）は、同名の配達先の他の記録から補う（TruckTracker 本体の集計と同じ）。距離も同様。
+        var codeByName = stops
             .Select(s => (s.DestinationName, Code: NormalizeCode(s.SalesCustomerCode))).Where(x => x.Code is not null)
             .GroupBy(x => x.DestinationName).ToDictionary(g => g.Key, g => g.First().Code);
+        var kmByName = stops.Where(s => s.Km is not null)
+            .GroupBy(s => s.DestinationName).ToDictionary(g => g.Key, g => g.First().Km!.Value);
+        // それでも座標のない配達先は、座標のある到着記録の平均距離で扱う。
+        var avgKm = stops.Where(s => s.Km is not null).Select(s => s.Km!.Value).DefaultIfEmpty(0).Average();
+
         var branchCountSum = new Dictionary<Guid, decimal>();
+        var branchKmSum = new Dictionary<Guid, decimal>();
         var customers = new Dictionary<string, Acc>();
 
         foreach (var d in deliveries)
@@ -32,29 +43,41 @@ public static class ProfitCalculator
                 var code = NormalizeCode(s.SalesCustomerCode) ?? codeByName.GetValueOrDefault(s.DestinationName);
                 var key = code ?? "name:" + s.DestinationName;   // コードなしは配達先名単位
                 if (!customers.TryGetValue(key, out var a)) customers[key] = a = new Acc(s.DestinationName, code);
+                var km = s.Km ?? kmByName.GetValueOrDefault(s.DestinationName, avgKm);
                 a.Count += share;
+                a.KmSum += share * km;
                 if (d.BranchId is { } b)
                 {
                     a.BranchCounts[b] = a.BranchCounts.GetValueOrDefault(b) + share;
+                    a.BranchKm[b] = a.BranchKm.GetValueOrDefault(b) + share * km;
                     branchCountSum[b] = branchCountSum.GetValueOrDefault(b) + share;
+                    branchKmSum[b] = branchKmSum.GetValueOrDefault(b) + share * km;
                 }
             }
         }
 
-        var perCount = branchCountSum.ToDictionary(
-            kv => kv.Key,
-            kv => kv.Value == 0 ? 0 : branchMonthlyExpense.GetValueOrDefault(kv.Key) * months / kv.Value);
+        decimal Expense(Acc a) => a.BranchCounts.Keys.Sum(b =>
+        {
+            var total = branchMonthlyExpense.GetValueOrDefault(b) * months;
+            var kmSum = branchKmSum[b];
+            var ds = kmSum == 0 ? 0 : distanceShare;   // 全員 0km なら距離で按分できない → 回数のみ
+            var byCount = total / branchCountSum[b] * a.BranchCounts[b];   // 従来の計算（1配送あたり経費 × 回数）
+            return ds == 0 ? byCount : (1 - ds) * byCount + ds * total * a.BranchKm[b] / kmSum;
+        });
 
         var rows = customers.Values
             .Select(a =>
             {
-                var expense = a.BranchCounts.Sum(kv => kv.Value * perCount[kv.Key]);
-                if (a.Code is null) return new CustomerProfit(a.Name, null, a.Count, expense, null, Warning.NoCode);
+                var expense = Expense(a);
+                var km = a.Count == 0 ? (decimal?)null : a.KmSum / a.Count;
+                if (a.Code is null) return new CustomerProfit(a.Name, null, a.Count, expense, null, Warning.NoCode, km);
                 return profits.TryGetValue(a.Code, out var p)
-                    ? new CustomerProfit(a.Name, a.Code, a.Count, expense, p, Warning.None)
-                    : new CustomerProfit(a.Name, a.Code, a.Count, expense, 0, Warning.NoSales);
+                    ? new CustomerProfit(a.Name, a.Code, a.Count, expense, p, Warning.None, km)
+                    : new CustomerProfit(a.Name, a.Code, a.Count, expense, 0, Warning.NoSales, km);
             })
-            .OrderBy(r => r.Name, StringComparer.Create(new System.Globalization.CultureInfo("ja-JP"), false))
+            // 営業利益の昇順（赤字の大きい順）。営業利益なし（コード未設定）は末尾、同額は名前順
+            .OrderBy(r => r.Net is null).ThenBy(r => r.Net)
+            .ThenBy(r => r.Name, StringComparer.Create(new System.Globalization.CultureInfo("ja-JP"), false))
             .ToList();
         return new ProfitReport(rows);
     }
@@ -72,8 +95,8 @@ public static class ProfitCalculator
         public string Name { get; } = name;
         public string? Code { get; } = code;
         public decimal Count;
+        public decimal KmSum;
         public Dictionary<Guid, decimal> BranchCounts { get; } = new();
+        public Dictionary<Guid, decimal> BranchKm { get; } = new();
     }
 }
-
-

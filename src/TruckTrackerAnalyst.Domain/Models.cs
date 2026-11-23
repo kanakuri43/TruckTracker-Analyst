@@ -1,7 +1,7 @@
 ﻿namespace TruckTrackerAnalyst.Domain;
 
-/// <summary>配達先1件（到着記録あり）。</summary>
-public sealed record Stop(string DestinationName, string? SalesCustomerCode);
+/// <summary>配達先1件（到着記録あり）。Km = 支店からの直線距離（座標なしは null）。</summary>
+public sealed record Stop(string DestinationName, string? SalesCustomerCode, decimal? Km = null);
 
 /// <summary>1回の配送（report）。支店と、到着済みの配達先一覧。</summary>
 public sealed record Delivery(Guid? BranchId, IReadOnlyList<Stop> Stops);
@@ -10,9 +10,9 @@ public enum CountMode { Count, Net }
 
 public enum Warning { None, NoCode, NoSales }
 
-/// <summary>得意先別の収益。Profit が null = 粗利算出不可（コード未設定）。</summary>
+/// <summary>得意先別の収益。Profit が null = 粗利算出不可（コード未設定）。Km = 支店からの平均直線距離（座標なしは null）。</summary>
 public sealed record CustomerProfit(
-    string Name, string? Code, decimal Count, decimal Expense, decimal? Profit, Warning Warning)
+    string Name, string? Code, decimal Count, decimal Expense, decimal? Profit, Warning Warning, decimal? Km = null)
 {
     public decimal? Net => Profit - Expense;
 }
