@@ -62,17 +62,19 @@ public sealed class ScatterChart : DockPanel
         var pts = _rows.Where(r => r.Km is not null).ToList();
         _footer.Text = $"{pts.Count} 件表示" + (_rows.Count > pts.Count ? $"（座標なし {_rows.Count - pts.Count} 件は除外）" : "")
                        + "　点にマウスを合わせると詳細を表示";
-        double xMax = Nice(pts.Select(r => (double)r.Count).DefaultIfEmpty(1).Max());
-        double yMax = Nice(pts.Select(r => (double)r.Km!.Value).DefaultIfEmpty(1).Max());
+        var (xMax, xStep) = Axis(pts.Select(r => (double)r.Count).DefaultIfEmpty(1).Max());
+        var (yMax, yStep) = Axis(pts.Select(r => (double)r.Km!.Value).DefaultIfEmpty(1).Max());
         double X(double v) => left + v / xMax * (w - left - right);
         double Y(double v) => h - bottom - v / yMax * (h - top - bottom);
 
-        for (var i = 0; i <= 5; i++)
+        for (var xv = 0.0; xv <= xMax + 1e-9; xv += xStep)
         {
-            double xv = xMax * i / 5, yv = yMax * i / 5;
             Add(new Line { X1 = X(xv), X2 = X(xv), Y1 = Y(0), Y2 = Y(yMax), Stroke = GridLine, StrokeThickness = 1 });
-            Add(new Line { X1 = X(0), X2 = X(xMax), Y1 = Y(yv), Y2 = Y(yv), Stroke = GridLine, StrokeThickness = 1 });
             Text($"{xv:0.#}", X(xv) - 10, Y(0) + 4);
+        }
+        for (var yv = 0.0; yv <= yMax + 1e-9; yv += yStep)
+        {
+            Add(new Line { X1 = X(0), X2 = X(xMax), Y1 = Y(yv), Y2 = Y(yv), Stroke = GridLine, StrokeThickness = 1 });
             Text($"{yv:0.#}", 8, Y(yv) - 8);
         }
         Text("回数", X(xMax) - 30, h - 18);
@@ -116,12 +118,14 @@ public sealed class ScatterChart : DockPanel
         return p;
     }
 
-    /// <summary>軸の上限を 1/2/5×10^n に切り上げる。</summary>
-    static double Nice(double v)
+    /// <summary>目盛り間隔 = 最大値/5 を 1/2/5×10^n に切り上げ、上限 = 最大値を目盛り間隔の倍数に切り上げ（例: 54 → 間隔20・上限60）。</summary>
+    static (double Max, double Step) Axis(double v)
     {
-        if (v <= 0) return 1;
-        var p = Math.Pow(10, Math.Floor(Math.Log10(v)));
-        return new[] { 1, 2, 5, 10 }.Select(m => m * p).First(c => c >= v);
+        if (v <= 0) return (1, 0.2);
+        var raw = v / 5;
+        var p = Math.Pow(10, Math.Floor(Math.Log10(raw)));
+        var step = new[] { 1, 2, 5, 10 }.Select(m => m * p).First(c => c >= raw);
+        return (Math.Ceiling(v / step) * step, step);
     }
 
     static Brush Freeze(string hex)
