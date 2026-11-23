@@ -2,6 +2,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:local="clr-namespace:TruckTrackerAnalyst.Presentation"
                  Title="得意先別 収益分析（粗利 − 配送経費）" Height="680" Width="1200" WindowStartupLocation="CenterScreen"
                  WindowTransitionsEnabled="False">
     <Window.Resources>
@@ -62,19 +63,26 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <DataGrid Grid.Row="2" Margin="0,10" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True"
-                  RowStyle="{StaticResource LossRow}" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="配送先名" Binding="{Binding Name}" Width="230" />
-                <DataGridTextColumn Header="得意先コード" Binding="{Binding Code}" Width="110" />
-                <DataGridTextColumn Header="距離(km)" Binding="{Binding Km, StringFormat={}{0:0.0}, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="80" />
-                <DataGridTextColumn Header="回数" Binding="{Binding Count, StringFormat={}{0:0.##}}" ElementStyle="{StaticResource Right}" Width="70" />
-                <DataGridTextColumn Header="期間経費" Binding="{Binding Expense, StringFormat=N0}" ElementStyle="{StaticResource Right}" Width="110" />
-                <DataGridTextColumn Header="粗利" Binding="{Binding Profit, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
-                <DataGridTextColumn Header="営業利益" SortDirection="Ascending" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
-                <DataGridTextColumn Header="備考" Binding="{Binding Note}" Width="*" ElementStyle="{StaticResource NoteText}" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <TabControl Grid.Row="2" Margin="0,10">
+            <TabItem Header="一覧" mah:HeaderedControlHelper.HeaderFontSize="16">
+                <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True"
+                          RowStyle="{StaticResource LossRow}" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="配送先名" Binding="{Binding Name}" Width="230" />
+                        <DataGridTextColumn Header="得意先コード" Binding="{Binding Code}" Width="110" />
+                        <DataGridTextColumn Header="距離(km)" Binding="{Binding Km, StringFormat={}{0:0.0}, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="80" />
+                        <DataGridTextColumn Header="回数" Binding="{Binding Count, StringFormat={}{0:0.##}}" ElementStyle="{StaticResource Right}" Width="70" />
+                        <DataGridTextColumn Header="期間経費" Binding="{Binding Expense, StringFormat=N0}" ElementStyle="{StaticResource Right}" Width="110" />
+                        <DataGridTextColumn Header="粗利" Binding="{Binding Profit, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
+                        <DataGridTextColumn Header="営業利益" SortDirection="Ascending" Binding="{Binding Net, StringFormat=N0, TargetNullValue=—}" ElementStyle="{StaticResource Right}" Width="110" />
+                        <DataGridTextColumn Header="備考" Binding="{Binding Note}" Width="*" ElementStyle="{StaticResource NoteText}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="散布図（回数 × 距離）" mah:HeaderedControlHelper.HeaderFontSize="16">
+                <local:ScatterChart x:Name="Scatter" />
+            </TabItem>
+        </TabControl>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" TextElement.FontSize="15" TextElement.FontWeight="Bold">
             <TextBlock Text="合計" Margin="0,0,20,0" />

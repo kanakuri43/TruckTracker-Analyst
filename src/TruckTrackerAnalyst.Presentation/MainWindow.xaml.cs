@@ -9,6 +9,7 @@ public partial class MainWindow : MetroWindow
     {
         InitializeComponent();
         DataContext = vm;
+        Scatter.Rows = vm.Rows;
         vm.PickSavePath = () =>
         {
             var d = new SaveFileDialog { Filter = "CSV (*.csv)|*.csv", FileName = $"収益_{vm.From:yyyyMMdd}-{vm.To:yyyyMMdd}.csv" };

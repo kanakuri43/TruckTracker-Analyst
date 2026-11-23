@@ -10,9 +10,11 @@ public enum CountMode { Count, Net }
 
 public enum Warning { None, NoCode, NoSales }
 
-/// <summary>得意先別の収益。Profit が null = 粗利算出不可（コード未設定）。Km = 支店からの平均直線距離（座標なしは null）。</summary>
+/// <summary>得意先別の収益。Profit が null = 粗利算出不可（コード未設定）。Km = 支店からの平均直線距離（座標なしは null）。
+/// SignFlips = 回数のみ按分と距離のみ按分で営業利益の符号（黒字/赤字）が逆転する。</summary>
 public sealed record CustomerProfit(
-    string Name, string? Code, decimal Count, decimal Expense, decimal? Profit, Warning Warning, decimal? Km = null)
+    string Name, string? Code, decimal Count, decimal Expense, decimal? Profit, Warning Warning, decimal? Km = null,
+    bool SignFlips = false)
 {
     public decimal? Net => Profit - Expense;
 }

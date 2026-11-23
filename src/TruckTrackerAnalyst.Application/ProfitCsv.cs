@@ -6,7 +6,10 @@ namespace TruckTrackerAnalyst.Application;
 public static class WarningText
 {
     /// <summary>備考欄の文言。1行に収まる短さで、原因と計算上の扱いを書く（CSVにも同じ文を出す）。</summary>
-    public static string Of(CustomerProfit r) => r.Warning switch
+    public static string Of(CustomerProfit r) =>
+        string.Join("／", new[] { OfWarning(r), r.SignFlips ? "回数按分と距離按分で黒字・赤字が逆転" : "" }.Where(s => s != ""));
+
+    private static string OfWarning(CustomerProfit r) => r.Warning switch
     {
         Warning.NoCode =>
             "得意先コード未設定のため粗利算出不可（経費のみ計上）",

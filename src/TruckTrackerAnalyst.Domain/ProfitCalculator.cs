@@ -56,11 +56,11 @@ public static class ProfitCalculator
             }
         }
 
-        decimal Expense(Acc a) => a.BranchCounts.Keys.Sum(b =>
+        decimal Expense(Acc a, decimal share) => a.BranchCounts.Keys.Sum(b =>
         {
             var total = branchMonthlyExpense.GetValueOrDefault(b) * months;
             var kmSum = branchKmSum[b];
-            var ds = kmSum == 0 ? 0 : distanceShare;   // 全員 0km なら距離で按分できない → 回数のみ
+            var ds = kmSum == 0 ? 0 : share;   // 全員 0km なら距離で按分できない → 回数のみ
             var byCount = total / branchCountSum[b] * a.BranchCounts[b];   // 従来の計算（1配送あたり経費 × 回数）
             return ds == 0 ? byCount : (1 - ds) * byCount + ds * total * a.BranchKm[b] / kmSum;
         });
@@ -68,12 +68,13 @@ public static class ProfitCalculator
         var rows = customers.Values
             .Select(a =>
             {
-                var expense = Expense(a);
+                var expense = Expense(a, distanceShare);
                 var km = a.Count == 0 ? (decimal?)null : a.KmSum / a.Count;
                 if (a.Code is null) return new CustomerProfit(a.Name, null, a.Count, expense, null, Warning.NoCode, km);
-                return profits.TryGetValue(a.Code, out var p)
-                    ? new CustomerProfit(a.Name, a.Code, a.Count, expense, p, Warning.None, km)
-                    : new CustomerProfit(a.Name, a.Code, a.Count, expense, 0, Warning.NoSales, km);
+                var hasSales = profits.TryGetValue(a.Code, out var p);
+                // 回数のみ(0%)と距離のみ(100%)で黒字・赤字が逆転する = 按分の前提次第で結論が変わる得意先
+                var flips = p - Expense(a, 0) < 0 != p - Expense(a, 1) < 0;
+                return new CustomerProfit(a.Name, a.Code, a.Count, expense, p, hasSales ? Warning.None : Warning.NoSales, km, flips);
             })
             // 営業利益の昇順（赤字の大きい順）。営業利益なし（コード未設定）は末尾、同額は名前順
             .OrderBy(r => r.Net is null).ThenBy(r => r.Net)

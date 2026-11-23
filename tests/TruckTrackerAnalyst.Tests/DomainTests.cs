@@ -146,6 +146,18 @@ public class DistanceWeightTests
     }
 
     [Fact]
+    public void SignFlips_WhenCountAndDistanceDisagree()
+    {
+        // 期間経費 1000 を A(10km)・B(90km) で按分。回数のみ: 各500 / 距離のみ: A 100, B 900
+        var r = ProfitCalculator.Calculate(
+            [new Delivery(B, [new Stop("A", "1", 10)]), new Delivery(B, [new Stop("B", "2", 90)])],
+            new Dictionary<Guid, decimal> { [B] = 1000 }, 1m,
+            new Dictionary<string, decimal> { ["1"] = 300, ["2"] = 2000 }, distanceShare: 0.5m);
+        Assert.True(r.Rows.Single(x => x.Name == "A").SignFlips);    // 300−500 < 0, 300−100 > 0
+        Assert.False(r.Rows.Single(x => x.Name == "B").SignFlips);   // どちらも黒字
+    }
+
+    [Fact]
     public void Share0_IsSameAsCountOnly() =>
         Assert.Equal(500, Exp(Run(0, new Stop("A", "1", 10), new Stop("B", "2", 90)), "A"));
 
