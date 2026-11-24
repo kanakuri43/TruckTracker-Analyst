@@ -119,7 +119,7 @@
     <path id="pAdmin" d="M460 301 H560" stroke="#1d6fb8" stroke-width="2.5" marker-start="url(#aRW)" marker-end="url(#aRW)" fill="none"/>
     <text x="510" y="291" font-size="12" text-anchor="middle" fill="#1d6fb8">記録・閲覧</text>
     <text x="510" y="319" font-size="11" text-anchor="middle" fill="#1d6fb8">リアルタイム表示</text>
-    <path id="pGsi" d="M245 376 V400" stroke="#8a6d1d" stroke-width="2" marker-end="url(#aGR)" fill="none"/>
+    <path d="M245 376 V400" stroke="#8a6d1d" stroke-width="2" marker-end="url(#aGR)" fill="none"/>
 
     <!-- 本アプリ -->
     <rect x="10" y="508" width="540" height="272" rx="10" fill="#f1f9f4" stroke="#2e8b57" stroke-width="1.5"/>
@@ -174,7 +174,7 @@
   // 2章の図: 矢印の上をリクエスト・レスポンスが流れるアニメーション。
   // GIF にするため、すべての動きを T 秒周期（begin=0・同じ dur）にそろえて継ぎ目なくループさせる。文字は動かさない。
   (() => {
-    const NS = 'http://www.w3.org/2000/svg', T = 8 /* 動きは 0〜5.9秒、残り約2秒は休み */, $ = id => document.getElementById(id), svg = $('flow');
+    const NS = 'http://www.w3.org/2000/svg', T = 8.6 /* 動きは 0〜7.1秒、残り1.5秒は休み */, $ = id => document.getElementById(id), svg = $('flow');
     const add = (parent, tag, attrs) => {
       const el = document.createElementNS(NS, tag);
       for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
@@ -188,19 +188,18 @@
 
     // [矢印, 向き(1=パスの向き/-1=逆), 出発秒, 到着秒, 色, レスポンスか, 届く箱, 跳ねるアイコン]
     const packets = [
-      ['pDriver',    1, 0.2,  0.7,  '#1d6fb8', 0, 'bSupa',   'iSupa'],
-      ['pDriver',   -1, 0.9,  1.4,  '#1d6fb8', 1, 'bDriver'],
-      ['pPc',        1, 0.5,  0.8,  '#b5651d', 0, 'bSales',  'iSales'],
-      ['pPc',       -1, 1.0,  1.3,  '#b5651d', 1, 'bPc',     'iPc'],
-      ['pAdmin',     1, 1.8,  2.3,  '#1d6fb8', 0, 'bSupa',   'iSupa'],
-      ['pAdmin',    -1, 2.5,  3.0,  '#1d6fb8', 1, 'bAdmin'],
-      ['pGsi',       1, 3.1,  3.35, '#8a6d1d', 0, 'bGsi'],
-      ['pGsi',      -1, 3.5,  3.75, '#8a6d1d', 1, 'bAdmin'],
+      // 順番: 1) 販売管理 → 2) 管理者画面 → 3) ドライバー画面 → 4) 収益分析アプリ
+      ['pPc',        1, 0.2,  0.6,  '#b5651d', 0, 'bSales',  'iSales'],
+      ['pPc',       -1, 0.8,  1.2,  '#b5651d', 1, 'bPc',     'iPc'],
+      ['pAdmin',     1, 1.5,  2.0,  '#1d6fb8', 0, 'bSupa',   'iSupa'],
+      ['pAdmin',    -1, 2.2,  2.7,  '#1d6fb8', 1, 'bAdmin'],
+      ['pDriver',    1, 3.0,  3.5,  '#1d6fb8', 0, 'bSupa',   'iSupa'],
+      ['pDriver',   -1, 3.7,  4.2,  '#1d6fb8', 1, 'bDriver'],
       // 分析アプリの2本は同時に出て同時に届く（長さが違うので速さが違う）
-      ['pAppSupa',   1, 3.3,  4.1,  '#2e8b57', 0, 'bSupa',   'iSupa'],
-      ['pAppSales',  1, 3.3,  4.1,  '#2e8b57', 0, 'bSales',  'iSales'],
-      ['pAppSupa',  -1, 4.4,  5.2,  '#2e8b57', 1, 'bApp'],
-      ['pAppSales', -1, 4.4,  5.2,  '#2e8b57', 1, 'bApp'],
+      ['pAppSupa',   1, 4.5,  5.3,  '#2e8b57', 0, 'bSupa',   'iSupa'],
+      ['pAppSales',  1, 4.5,  5.3,  '#2e8b57', 0, 'bSales',  'iSales'],
+      ['pAppSupa',  -1, 5.6,  6.4,  '#2e8b57', 1, 'bApp'],
+      ['pAppSales', -1, 5.6,  6.4,  '#2e8b57', 1, 'bApp'],
     ];
     const hits = {}; // 箱・アイコンの id → 届いた秒
     for (const [path, dir, t0, t1, color, res, box, icon] of packets) {
