@@ -410,32 +410,23 @@
     </table>
   </div>
 
-  <details>
-    <summary>技術情報（システム担当者向け）</summary>
-    <div class="grid2" style="margin-top:10px">
-      <div class="card proj tt">
-        <h3>TruckTracker（配送管理）</h3>
-        <ul>
-          <li>場所: <code>repos\TruckTracker</code></li>
-          <li>HTML / Vanilla JS、Bootstrap 5.3、Supabase JS v2、Leaflet。<code>public/</code> を Netlify で公開</li>
-          <li>DB定義: <code>supabase/schema.sql</code>（RLS = allow_all のため anon key で書込可能）</li>
-          <li>集計の参考実装: <code>admin.js</code> の <code>aggregateDestData</code> / <code>periodMonths</code></li>
-        </ul>
-      </div>
-      <div class="card proj an">
-        <h3>TruckTracker-Analyst（収益分析アプリ）</h3>
-        <ul>
-          <li>場所: <code>repos\TruckTracker-Analyst</code></li>
-          <li>C# / .NET 10 / WPF、MahApps.Metro、CommunityToolkit.Mvvm、Dapper、xUnit</li>
-          <li>SQL Server は SELECT のみ（<code>ReadOnlySqlGuard</code>）、Supabase は HTTP GET のみ</li>
-          <li>計算: <code>Domain/ProfitCalculator.cs</code>、距離: <code>Domain/Geo.cs</code>（Haversine の <code>Km</code>、コース走行距離の按分 <code>RouteShares</code>）、到着順の並べ替え: <code>Infrastructure/SupabaseDeliveryRepository.cs</code>、散布図: <code>Presentation/ScatterChart.cs</code></li>
-          <li>配布: <code>dotnet publish</code> の <code>publish/</code>（.NET 10 Desktop Runtime が必要）</li>
-        </ul>
-      </div>
+  <h2>5. 今後の展望</h2>
+  <div class="grid2">
+    <div class="card proj tt">
+      <h3>配送計画の自動作成</h3>
+      <ul class="plain">
+        <li>販売管理のデータを読み込み、<b>納品日</b>から配送計画を自動で作成する。</li>
+      </ul>
     </div>
-  </details>
+    <div class="card proj an">
+      <h3>経費を年月ごとに管理</h3>
+      <ul class="plain">
+        <li>経費を<b>年月ごと</b>に管理し、より正確な収益を出す。</li>
+      </ul>
+    </div>
+  </div>
 
-  <footer>更新: 2026-11-24（距離加重を走行距離の距離帯按分に変更・説明を図中心に整理） ／ 根拠: 両プロジェクトの CLAUDE.md と実コード。接続情報・キーは載せていません。</footer>
+  <footer>更新: 2026-11-25（今後の展望を追記） ／ 前回: 2026-11-24（距離加重を走行距離の距離帯按分に変更・説明を図中心に整理） ／ 根拠: 両プロジェクトの CLAUDE.md と実コード。接続情報・キーは載せていません。</footer>
 </main>
 
 </body>
