@@ -1,7 +1,8 @@
 ﻿namespace TruckTrackerAnalyst.Domain;
 
-/// <summary>配達先1件（到着記録あり）。Km = 支店からの直線距離（座標なしは null）。</summary>
-public sealed record Stop(string DestinationName, string? SalesCustomerCode, decimal? Km = null);
+/// <summary>配達先1件（到着記録あり）。Km = 支店からの直線距離（表示用）。
+/// RouteKm = そのコースの走行距離（支店→到着順→支店）のうちこの配達先の負担分（<see cref="Geo.RouteShares"/>）。距離按分に使う。座標なしは null。</summary>
+public sealed record Stop(string DestinationName, string? SalesCustomerCode, decimal? Km = null, decimal? RouteKm = null);
 
 /// <summary>1回の配送（report）。支店と、到着済みの配達先一覧。</summary>
 public sealed record Delivery(Guid? BranchId, IReadOnlyList<Stop> Stops);

@@ -132,13 +132,15 @@ public class DistanceWeightTests
         stops.Select(s => new Delivery(B, [s])), new Dictionary<Guid, decimal> { [B] = 1000 }, 1m,
         new Dictionary<string, decimal>(), distanceShare: share);
 
+    static Stop S(string n, string? c, decimal? km) => new(n, c, km, km);   // 按分距離 = 直線距離（1配達先ずつのコース相当）
+
     static decimal Exp(ProfitReport r, string name) => r.Rows.Single(x => x.Name == name).Expense;
 
     [Fact]
     public void Share50_SplitsHalfByCount_HalfByCountTimesKm()
     {
         // A 10km ×1回, B 30km ×1回: 回数分 500 を 1:1、距離分 500 を 10:30
-        var r = Run(0.5m, new Stop("A", "1", 10), new Stop("B", "2", 30));
+        var r = Run(0.5m, S("A", "1", 10), S("B", "2", 30));
         Assert.Equal(250 + 125, Exp(r, "A"));
         Assert.Equal(250 + 375, Exp(r, "B"));
         Assert.Equal(1000, r.Expense);
@@ -150,7 +152,7 @@ public class DistanceWeightTests
     {
         // 期間経費 1000 を A(10km)・B(90km) で按分。回数のみ: 各500 / 距離のみ: A 100, B 900
         var r = ProfitCalculator.Calculate(
-            [new Delivery(B, [new Stop("A", "1", 10)]), new Delivery(B, [new Stop("B", "2", 90)])],
+            [new Delivery(B, [S("A", "1", 10)]), new Delivery(B, [S("B", "2", 90)])],
             new Dictionary<Guid, decimal> { [B] = 1000 }, 1m,
             new Dictionary<string, decimal> { ["1"] = 300, ["2"] = 2000 }, distanceShare: 0.5m);
         Assert.True(r.Rows.Single(x => x.Name == "A").SignFlips);    // 300−500 < 0, 300−100 > 0
@@ -159,13 +161,13 @@ public class DistanceWeightTests
 
     [Fact]
     public void Share0_IsSameAsCountOnly() =>
-        Assert.Equal(500, Exp(Run(0, new Stop("A", "1", 10), new Stop("B", "2", 90)), "A"));
+        Assert.Equal(500, Exp(Run(0, S("A", "1", 10), S("B", "2", 90)), "A"));
 
     [Fact]
     public void MissingKm_FilledBySameName_ThenAverage()
     {
         // A(null) は同名の A=10 で補完。C は座標なし → 座標ありの記録の平均 (10+40)/2 = 25
-        var r = Run(1, new Stop("A", "1", 10), new Stop("A", "1", null), new Stop("B", "2", 40), new Stop("C", null, null));
+        var r = Run(1, S("A", "1", 10), S("A", "1", null), S("B", "2", 40), S("C", null, null));
         Assert.Equal(10, r.Rows.Single(x => x.Name == "A").Km);
         Assert.Equal(25, r.Rows.Single(x => x.Name == "C").Km);
         Assert.Equal(1000m * 20 / 85, Exp(r, "A"));
@@ -174,7 +176,52 @@ public class DistanceWeightTests
 
     [Fact]
     public void AllZeroKm_FallsBackToCount() =>
-        Assert.Equal(500, Exp(Run(1, new Stop("A", "1", 0), new Stop("B", "2", 0)), "A"));
+        Assert.Equal(500, Exp(Run(1, S("A", "1", 0), S("B", "2", 0)), "A"));
+
+    static readonly (double Lat, double Lng) Origin = (0, 0);
+    static (double Lat, double Lng)? East(double lng) => (0, lng);   // 赤道上: 経度1° ≒ 111km
+
+    [Fact]
+    public void RouteShares_SingleStop_IsRoundTrip() =>
+        Assert.Equal(2 * Geo.Km(0, 0, 0, 1), Geo.RouteShares(Origin, [East(1)])[0]!.Value, 6);
+
+    [Fact]
+    public void RouteShares_DocExample_LayersByDistance()
+    {
+        // architecture.html の例: A 3, B 11, C 12（同じ方面）→ 走行 24 を A 2 : B 10 : C 12
+        var s = Geo.RouteShares(Origin, [East(3), East(11), East(12)]);
+        var unit = Geo.Km(0, 0, 0, 1);
+        Assert.Equal(2 * unit, s[0]!.Value, 6);
+        Assert.Equal(10 * unit, s[1]!.Value, 6);
+        Assert.Equal(12 * unit, s[2]!.Value, 6);
+    }
+
+    [Fact]
+    public void RouteShares_OppositeDirections_SplitEvenly_RegardlessOfOrder()
+    {
+        // 東 1° と 西 1°（同じ距離）: 回る順番によらず走行距離を半分ずつ
+        var s = Geo.RouteShares(Origin, [East(1), East(-1)]);
+        Assert.Equal(s[0]!.Value, s[1]!.Value, 6);
+        Assert.Equal(4 * Geo.Km(0, 0, 0, 1), s[0]!.Value + s[1]!.Value, 6);
+    }
+
+    [Fact]
+    public void RouteShares_SameDirection_SumsToRouteLength_AndFarStopPaysMore()
+    {
+        // 支店→A(1°)→B(1.1°)→支店 の走行距離 = 2.2° 分。単独往復だと 2.0+2.2=4.2° 分になってしまう（二重計上）
+        var s = Geo.RouteShares(Origin, [East(1), East(1.1)]);
+        Assert.Equal(Geo.Km(0, 0, 0, 2.2), s.Sum(x => x!.Value), 1);
+        Assert.True(s[1] > s[0]);
+        Assert.True(s[0] < Geo.Km(0, 0, 0, 2));   // A の負担は単独往復より小さい
+    }
+
+    [Fact]
+    public void RouteShares_MissingPoint_IsSkippedAndNull()
+    {
+        var s = Geo.RouteShares(Origin, [East(1), null, East(1)]);
+        Assert.Null(s[1]);
+        Assert.Equal(2 * Geo.Km(0, 0, 0, 1), s[0]!.Value + s[2]!.Value, 1);
+    }
 
     [Fact]
     public void Haversine_AkitaToTokyo_About450km() =>

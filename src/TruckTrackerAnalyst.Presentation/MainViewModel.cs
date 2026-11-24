@@ -22,10 +22,14 @@ public sealed record RowVm(CustomerProfit R)
 
 public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObject
 {
-    private static readonly DateTime PrevMonth = DateTime.Today.AddMonths(-1);
+    private static readonly DateTime ThisMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-    [ObservableProperty] private DateTime? _from = new DateTime(PrevMonth.Year, PrevMonth.Month, 1);
-    [ObservableProperty] private DateTime? _to = new DateTime(PrevMonth.Year, PrevMonth.Month, DateTime.DaysInMonth(PrevMonth.Year, PrevMonth.Month));
+    /// <summary>選べる年月（各月1日、新しい順に直近36か月）。</summary>
+    public IReadOnlyList<DateTime> Months { get; } = Enumerable.Range(0, 36).Select(i => ThisMonth.AddMonths(-i)).ToList();
+
+    // 期間は年月で指定（開始月の1日〜終了月の末日）。初期値は前月
+    [ObservableProperty] private DateTime _from = ThisMonth.AddMonths(-1);
+    [ObservableProperty] private DateTime _to = ThisMonth.AddMonths(-1);
     [ObservableProperty] private bool _netMode;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(DistanceLabel))]
     private double _distancePercent = 75;   // 期間経費のうち距離で按分する割合(%)。0 = 回数のみ（従来の計算）
@@ -41,8 +45,8 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
     public Func<string?>? PickSavePath { get; set; }
 
     // 条件を変えたら即再集計（更新ボタンなし）
-    partial void OnFromChanged(DateTime? value) => _ = ReloadAsync();
-    partial void OnToChanged(DateTime? value) => _ = ReloadAsync();
+    partial void OnFromChanged(DateTime value) => _ = ReloadAsync();
+    partial void OnToChanged(DateTime value) => _ = ReloadAsync();
     partial void OnNetModeChanged(bool value) => _ = ReloadAsync();
     partial void OnDistancePercentChanged(double value) => _ = ReloadAsync();
 
@@ -52,8 +56,8 @@ public partial class MainViewModel(AnalyzeProfitUseCase useCase) : ObservableObj
     public async Task ReloadAsync()
     {
         var v = ++_version;
-        if (From is not { } f || To is not { } t) { IsBusy = false; return; }
-        if (f > t) { Error = "期間の開始日が終了日より後になっています。"; IsBusy = false; return; }
+        var (f, t) = (From, To.AddMonths(1).AddDays(-1));
+        if (f > t) { Error = "期間の開始月が終了月より後になっています。"; IsBusy = false; return; }
 
         IsBusy = true; Error = null;
         try

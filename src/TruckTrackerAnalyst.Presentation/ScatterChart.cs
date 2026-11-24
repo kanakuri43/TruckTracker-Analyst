@@ -7,7 +7,7 @@ using System.Windows.Shapes;
 namespace TruckTrackerAnalyst.Presentation;
 
 /// <summary>
-/// 回数 × 距離の散布図。点の大きさ = 粗利、点の色 = 営業利益の黒字/赤字、白抜きの輪 = 回数按分と距離按分で黒字・赤字が逆転する得意先。
+/// 回数 × 距離の散布図。点の大きさ = |営業利益|（黒字は利益・赤字は損失の大きさ）、点の色 = 営業利益の黒字/赤字、白抜きの輪 = 回数按分と距離按分で黒字・赤字が逆転する得意先。
 /// メイン画面のタブに置く。Rows（一覧）が再集計されたら描き直す。
 /// </summary>
 public sealed class ScatterChart : DockPanel
@@ -32,7 +32,7 @@ public sealed class ScatterChart : DockPanel
         legend.Children.Add(Key(Dot(Loss, false), "赤字"));
         legend.Children.Add(Key(Dot(NoData, false), "粗利なし（コード未設定）"));
         legend.Children.Add(Key(Dot(Ink, true), "回数按分と距離按分で黒字・赤字が逆転"));
-        legend.Children.Add(new TextBlock { Text = "点の大きさ = 粗利（右上で小さい点 = 手間の割に粗利が取れていない）", Foreground = Ink, VerticalAlignment = VerticalAlignment.Center });
+        legend.Children.Add(new TextBlock { Text = "点の大きさ = 営業利益の大きさ（黒字は利益・赤字は損失）", Foreground = Ink, VerticalAlignment = VerticalAlignment.Center });
         Margin = new Thickness(0, 8, 0, 0);
         SetDock(legend, Dock.Top);
         SetDock(_footer, Dock.Bottom);
@@ -81,9 +81,9 @@ public sealed class ScatterChart : DockPanel
         Text("回数", X(xMax) - 30, h - 18);
         Text("平均距離 (km)", left + 4, 0);
 
-        // 点の面積 ∝ 粗利（右上 = 手間が大きいのに点が小さい = 粗利が取れていない先）。粗利0以下・なしは最小
-        var pMax = (double)pts.Select(r => r.Profit ?? 0).DefaultIfEmpty(0).Max();
-        double Size(RowVm r) => pMax <= 0 || r.Profit is not > 0 ? MinDot : MinDot + (MaxDot - MinDot) * Math.Sqrt((double)r.Profit.Value / pMax);
+        // 点の面積 ∝ |営業利益|（黒字は利益、赤字は損失が大きいほど大きい）。営業利益なし（コード未設定）は最小
+        var nMax = (double)pts.Select(r => Math.Abs(r.Net ?? 0)).DefaultIfEmpty(0).Max();
+        double Size(RowVm r) => nMax <= 0 || r.Net is null ? MinDot : MinDot + (MaxDot - MinDot) * Math.Sqrt((double)Math.Abs(r.Net.Value) / nMax);
 
         // 大きい点を先に描いて小さい点を隠さない。逆転は最後に描いて前面に出す
         foreach (var r in pts.OrderBy(r => r.R.SignFlips).ThenByDescending(Size))

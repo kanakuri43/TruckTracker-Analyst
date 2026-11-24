@@ -40,12 +40,12 @@
 
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="期間" VerticalAlignment="Center" Margin="0,0,8,0" />
-            <DatePicker SelectedDate="{Binding From}" Width="140" />
+            <ComboBox ItemsSource="{Binding Months}" SelectedItem="{Binding From}" ItemStringFormat="yyyy年M月" Width="130" />
             <TextBlock Text="〜" VerticalAlignment="Center" Margin="8,0" />
-            <DatePicker SelectedDate="{Binding To}" Width="140" />
+            <ComboBox ItemsSource="{Binding Months}" SelectedItem="{Binding To}" ItemStringFormat="yyyy年M月" Width="130" />
             <CheckBox Content="正味回数（1コース内の配達先数で按分）" IsChecked="{Binding NetMode}" Margin="20,0" VerticalAlignment="Center" />
             <TextBlock Text="距離加重" VerticalAlignment="Center" Margin="0,0,6,0"
-                       ToolTip="期間経費のうち指定した割合を「回数 × 支店からの直線距離」で按分する。残りは回数で按分。0% = 回数のみ。" />
+                       ToolTip="期間経費のうち指定した割合を「コースの走行距離（支店→到着順→支店の直線の合計）の負担分」で按分する。残りは回数で按分。0% = 回数のみ。" />
             <Slider Value="{Binding DistancePercent}" Minimum="0" Maximum="100" TickFrequency="25" IsSnapToTickEnabled="True"
                     TickPlacement="BottomRight" Width="140" VerticalAlignment="Center" />
             <TextBlock Text="{Binding DistanceLabel}" Width="100" VerticalAlignment="Center" Margin="6,0,20,0" />

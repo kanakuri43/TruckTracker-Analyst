@@ -3,7 +3,7 @@
 /// <summary>
 /// 得意先別 営業利益 = 粗利(販売管理) − 配送経費(配送管理)。TruckTracker admin.js の aggregateDestData と同じ按分。
 /// 経費 = 支店の期間経費 ÷ その支店の回数合計 × 得意先の回数。
-/// 距離加重（distanceShare &gt; 0）: 期間経費のうち distanceShare を「回数×支店からの直線距離」で、残りを回数で按分する。
+/// 距離加重（distanceShare &gt; 0）: 期間経費のうち distanceShare を「コースの走行距離の負担分（Stop.RouteKm）」で、残りを回数で按分する。
 /// </summary>
 public static class ProfitCalculator
 {
@@ -30,6 +30,10 @@ public static class ProfitCalculator
             .GroupBy(s => s.DestinationName).ToDictionary(g => g.Key, g => g.First().Km!.Value);
         // それでも座標のない配達先は、座標のある到着記録の平均距離で扱う。
         var avgKm = stops.Where(s => s.Km is not null).Select(s => s.Km!.Value).DefaultIfEmpty(0).Average();
+        // 距離按分に使う走行距離の負担分（RouteKm）も同様に補完。コースごとに値が違うので同名は平均。
+        var routeByName = stops.Where(s => s.RouteKm is not null)
+            .GroupBy(s => s.DestinationName).ToDictionary(g => g.Key, g => g.Average(s => s.RouteKm!.Value));
+        var avgRoute = stops.Where(s => s.RouteKm is not null).Select(s => s.RouteKm!.Value).DefaultIfEmpty(0).Average();
 
         var branchCountSum = new Dictionary<Guid, decimal>();
         var branchKmSum = new Dictionary<Guid, decimal>();
@@ -43,15 +47,16 @@ public static class ProfitCalculator
                 var code = NormalizeCode(s.SalesCustomerCode) ?? codeByName.GetValueOrDefault(s.DestinationName);
                 var key = code ?? "name:" + s.DestinationName;   // コードなしは配達先名単位
                 if (!customers.TryGetValue(key, out var a)) customers[key] = a = new Acc(s.DestinationName, code);
-                var km = s.Km ?? kmByName.GetValueOrDefault(s.DestinationName, avgKm);
+                var km = s.Km ?? kmByName.GetValueOrDefault(s.DestinationName, avgKm);   // 表示用
+                var route = s.RouteKm ?? routeByName.GetValueOrDefault(s.DestinationName, avgRoute);   // 按分用（コース総距離の負担分なので share は掛けない）
                 a.Count += share;
                 a.KmSum += share * km;
                 if (d.BranchId is { } b)
                 {
                     a.BranchCounts[b] = a.BranchCounts.GetValueOrDefault(b) + share;
-                    a.BranchKm[b] = a.BranchKm.GetValueOrDefault(b) + share * km;
+                    a.BranchKm[b] = a.BranchKm.GetValueOrDefault(b) + route;
                     branchCountSum[b] = branchCountSum.GetValueOrDefault(b) + share;
-                    branchKmSum[b] = branchKmSum.GetValueOrDefault(b) + share * km;
+                    branchKmSum[b] = branchKmSum.GetValueOrDefault(b) + route;
                 }
             }
         }
