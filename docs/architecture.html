@@ -60,7 +60,6 @@
   </div>
 
   <h2>2. 全体の流れ</h2>
-  <p class="lead">分析アプリ（緑）は、ほかの2つのシステムのデータを<b>読むだけ</b>です（書き換えません）。</p>
   <div class="card">
   <svg id="flow" viewBox="0 0 1000 790" role="img" aria-label="システム全体図">
     <defs>
@@ -135,7 +134,6 @@
     <text x="398" y="706" font-size="11" text-anchor="middle" fill="#666">社内PCにコピーして使う</text>
 
     <path id="pAppSupa" d="M440 550 V498 H580 V376" stroke="#2e8b57" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#aRO)" fill="none"/>
-    <text x="572" y="392" font-size="12" text-anchor="end" fill="#2e8b57" font-weight="700">読むだけ</text>
 
     <!-- 販売管理 -->
     <rect x="570" y="508" width="420" height="272" rx="10" fill="#fdf5ec" stroke="#b5651d" stroke-width="1.5"/>
@@ -156,7 +154,6 @@
     <path id="pPc" d="M810 660 H760" stroke="#b5651d" stroke-width="2.5" marker-start="url(#aBR)" marker-end="url(#aBR)" fill="none"/>
     <text x="785" y="650" font-size="11" text-anchor="middle" fill="#b5651d">入力・参照</text>
     <path id="pAppSales" d="M510 660 H600" stroke="#2e8b57" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#aRO)" fill="none"/>
-    <text x="555" y="650" font-size="11" text-anchor="middle" fill="#2e8b57" font-weight="700">読むだけ</text>
     <text x="555" y="678" font-size="11" text-anchor="middle" fill="#2e8b57">粗利</text>
   </svg>
   <div class="legend">
@@ -404,7 +401,7 @@
       <figcaption style="font-size:.85rem;color:var(--mute);margin-top:4px">画面例（2026年10月・距離加重 75%）</figcaption>
     </figure>
     <table>
-      <tr><td style="width:14em"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;background:#e34948"></span>赤（塗りつぶし）</td><td>回数で割っても距離で割っても赤字 → <b>優先して見直し</b></td></tr>
+      <tr><td style="width:14em"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;background:#e34948"></span>赤（塗りつぶし）</td><td>回数で割っても距離で割っても赤字 → <b>優先して見直し （特に左下）</b></td></tr>
       <tr><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;border:3px solid #333;background:#fff"></span>白抜きの輪</td><td>割り振り方しだいで黒字・赤字が逆転 → 実態を確かめてから判断</td></tr>
       <tr><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:6px;background:#2a78d6"></span>青</td><td>黒字</td></tr>
     </table>
